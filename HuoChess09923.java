@@ -404,6 +404,7 @@ public static int m_FinishingRank_mate;
 
   public static void main(String[] args) {
    
+   //Thinking_Depth = 2;
    Thinking_Depth = 4;
    
    // Ask for the color the player wants to play with
@@ -650,9 +651,9 @@ public static int m_FinishingRank_mate;
   Castling_Move = false;
   
   //v0.9921: Code for castling
-  if (MovingPiece.equals("White King"))
+  if (MovingPiece.equals("WK"))
       White_King_Moved = true;
-  else if (MovingPiece.equals("Black King"))
+  else if (MovingPiece.equals("BK"))
       Black_King_Moved = true;
 
   // v0.992: Pawn promotion is checked once centrally through pawn promotion function PawnPromotion()!!
@@ -660,34 +661,34 @@ public static int m_FinishingRank_mate;
   //         So since I do this here, the PawnPromotion() call is not needed... :P
   // v0.990
   // Promotion
-  if ((MovingPiece.equals("White Pawn")) && (m_FinishingRank == 8))
-      MovingPiece = "White Queen";
-  if ((MovingPiece.equals("Black Pawn")) && (m_FinishingRank == 1))
-      MovingPiece = "Black Queen";
+  if ((MovingPiece.equals("WP")) && (m_FinishingRank == 8))
+      MovingPiece = "WQ";
+  if ((MovingPiece.equals("BP")) && (m_FinishingRank == 1))
+      MovingPiece = "BQ";
 
   // Check if castling occured (so as to move the rook next to the moving king)
   // v0.9921: Simplified code
   if (m_PlayerColor.equals("w"))
   {
       //MessageBox.Show("Checkpoint 1.5");
-      if ((MovingPiece.equals("White King")) &&
+      if ((MovingPiece.equals("WK")) &&
           (m_StartingColumnNumber == 5) &&
           (m_StartingRank == 1) &&
           (m_FinishingColumnNumber == 7) &&
           (m_FinishingRank == 1))
       {
-          Skakiera[(5)][(0)] = "White Rook";
+          Skakiera[(5)][(0)] = "WR";
           Skakiera[(7)][(0)] = "";
           White_Castling_Occured = true;
           //MessageBox.Show( "Ο λευκός κάνει μικρό ροκε." );
       }
-      else if ((MovingPiece.equals("White King")) &&
+      else if ((MovingPiece.equals("WK")) &&
               (m_StartingColumnNumber == 5) &&
               (m_StartingRank == 1) &&
               (m_FinishingColumnNumber == 3) &&
               (m_FinishingRank == 1))
       {
-          Skakiera[(3)][(0)] = "White Rook";
+          Skakiera[(3)][(0)] = "WR";
           Skakiera[(0)][(0)] = "";
           White_Castling_Occured = true;
           //MessageBox.Show( "Ο λευκός κάνει μεγάλο ροκε." );
@@ -695,24 +696,24 @@ public static int m_FinishingRank_mate;
   }
   else if (m_PlayerColor.equals("b"))
   {
-      if ((MovingPiece.equals("Black King")) &&
+      if ((MovingPiece.equals("BK")) &&
               (m_StartingColumnNumber == 5) &&
               (m_StartingRank == 8) &&
               (m_FinishingColumnNumber == 7) &&
               (m_FinishingRank == 8))
       {
-          Skakiera[(5)][(7)] = "Black Rook";
+          Skakiera[(5)][(7)] = "BR";
           Skakiera[(7)][(7)] = "";
           Black_Castling_Occured = true;
           //MessageBox.Show( "Ο μαύρος κάνει μικρό ροκε." );
       }
-      else if ((MovingPiece.equals("Black King")) &&
+      else if ((MovingPiece.equals("BK")) &&
               (m_StartingColumnNumber == 5) &&
               (m_StartingRank == 8) &&
               (m_FinishingColumnNumber == 3) &&
               (m_FinishingRank == 8))
       {
-          Skakiera[(3)][(7)] = "Black Rook";
+          Skakiera[(3)][(7)] = "BR";
           Skakiera[(0)][(7)] = "";
           Black_Castling_Occured = true;
           //MessageBox.Show( "Ο μαύρος κάνει μεγάλο ροκε." );
@@ -929,6 +930,7 @@ public static void ComputerMove(String[][] Skakiera_Thinking_init)
 {
         // v0.990 change: The best score for every move will be stored at each level. Only if the new move analyzed
         // has a better score than the best score, will it be analyzed (target: trim the analysis tree)
+        //Move_Analyzed = 0;    // NEW
         int bestScoreLevel0 = 0;
         //V0.990: Initialized the values
         int iii = 0;
@@ -974,12 +976,20 @@ public static void ComputerMove(String[][] Skakiera_Thinking_init)
         //int m_FinishingRank;
 
         //v0.990
-        String[][] Skakiera_Move_After_0 = new String[8][8];
+        //String[][] Skakiera_Move_After_0 = new String[8][8];
 
         // If there is a possibility to eat back what was eaten, then go for it!
         possibility_to_eat_back = false;
         possibility_to_eat = false;
-
+        
+        //v0.992
+        Mate_Found = false;
+        Pat_Found = false;
+        m_StartingColumnNumber_mate = 0;
+        m_FinishingColumnNumber_mate = 0;
+        m_StartingRank_mate = 0;
+        m_FinishingRank_mate = 0;
+                
         ///#region InitializeNodes
         // START [MiniMax algorithm - skakos]
         NodeLevel_0_count = 0;
@@ -1099,7 +1109,7 @@ public static void ComputerMove(String[][] Skakiera_Thinking_init)
                 for (jjj = 0; jjj <= 7; jjj++)
                 {
                         //v0.980: Reduce all texts ("WK" for "Wh King", "WN" for "Wh Knight" and so on...)
-                        if (((Who_Is_Analyzed.equals("HY")) && ((((Skakiera_Thinking[(iii)][(jjj)].equals("WK")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WQ")) || (Skakiera_Thinking[(iii)][(jjj)].equals("White Rook")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WN")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WB")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WP"))) && (m_PlayerColor.equals("b"))) || (((Skakiera_Thinking[(iii)][(jjj)].equals("BK")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BQ")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BR")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BN")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BB")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BP"))) && (m_PlayerColor.equals("w"))))) || ((Who_Is_Analyzed.equals("Hu")) && ((((Skakiera_Thinking[(iii)][(jjj)].equals("WK")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WQ")) || (Skakiera_Thinking[(iii)][(jjj)].equals("White Rook")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WN")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WB")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WP"))) && (m_PlayerColor.equals("w"))) || (((Skakiera_Thinking[(iii)][(jjj)].equals("BK")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BQ")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BR")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BN")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BB")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BP"))) && (m_PlayerColor.equals("b"))))))
+                        if (((Who_Is_Analyzed.equals("HY")) && ((((Skakiera_Thinking[(iii)][(jjj)].equals("WK")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WQ")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WR")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WN")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WB")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WP"))) && (m_PlayerColor.equals("b"))) || (((Skakiera_Thinking[(iii)][(jjj)].equals("BK")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BQ")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BR")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BN")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BB")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BP"))) && (m_PlayerColor.equals("w"))))) || ((Who_Is_Analyzed.equals("Human")) && ((((Skakiera_Thinking[(iii)][(jjj)].equals("WK")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WQ")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WR")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WN")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WB")) || (Skakiera_Thinking[(iii)][(jjj)].equals("WP"))) && (m_PlayerColor.equals("w"))) || (((Skakiera_Thinking[(iii)][(jjj)].equals("BK")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BQ")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BR")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BN")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BB")) || (Skakiera_Thinking[(iii)][(jjj)].equals("BP"))) && (m_PlayerColor.equals("b"))))))
                         {
 
                                 for (int w = 0; w <= 7; w++)
@@ -1124,7 +1134,7 @@ public static void ComputerMove(String[][] Skakiera_Thinking_init)
 
                                                 if (Move < 5)
                                                 {
-                                                        if ((MovingPiece.equals("WQ")) || (MovingPiece.equals("BQ")) || (MovingPiece.equals("White Rook")) || (MovingPiece.equals("BR")))
+                                                        if ((MovingPiece.equals("WQ")) || (MovingPiece.equals("BQ")) || (MovingPiece.equals("WR")) || (MovingPiece.equals("BR")))
                                                         {
                                                                 ThisIsStupidMove = "Y";
                                                         }
@@ -1364,7 +1374,7 @@ public static void ComputerMove(String[][] Skakiera_Thinking_init)
                                                                         {
                                                                                 for (j = 0; j <= 7; j++)
                                                                                 {
-                                                                                        Skakiera_Move_After_0[(i)][(j)] = Skakiera_Thinking[(i)][(j)];
+                                                                                        //Skakiera_Move_After_0[(i)][(j)] = Skakiera_Thinking[(i)][(j)];
                                                                                         Skakiera_Move_After_0_new[(i)][(j)] = Skakiera_Thinking[(i)][(j)];
                                                                                 }
                                                                         }
@@ -3019,7 +3029,7 @@ public static boolean CheckForWhiteCheck(String[][] WCSkakiera) {
                     {
                         if ((WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("BR")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("BQ")))
                             KingCheck = true;
-                        else if ((WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("White Rook")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("WQ")))
+                        else if ((WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("WR")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("WQ")))
                             DangerFromRight = false;
                         else if ((WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("BP")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("BN")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("BB")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - 1)].equals("BK")))
                             DangerFromRight = false;
@@ -3039,7 +3049,7 @@ public static boolean CheckForWhiteCheck(String[][] WCSkakiera) {
                     {
                         if ((WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("BR")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("BQ")))
                             KingCheck = true;
-                        else if ((WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("White Rook")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("WQ")))
+                        else if ((WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("WR")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("WQ")))
                             DangerFromLeft = false;
                         else if ((WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("BP")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("BN")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("BB")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - 1)].equals("BK")))
                             DangerFromLeft = false;
@@ -3060,7 +3070,7 @@ public static boolean CheckForWhiteCheck(String[][] WCSkakiera) {
                     {
                         if ((WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("BR")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("BQ")))
                             KingCheck = true;
-                        else if ((WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("White Rook")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("WQ")))
+                        else if ((WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("WR")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("WQ")))
                             DangerFromUp = false;
                         else if ((WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("BP")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("BN")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("BB")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank + klopa - 1)].equals("BK")))
                             DangerFromUp = false;
@@ -3080,7 +3090,7 @@ public static boolean CheckForWhiteCheck(String[][] WCSkakiera) {
                     {
                         if ((WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("BR")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("BQ")))
                             KingCheck = true;
-                        else if ((WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("White Rook")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("WQ")))
+                        else if ((WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("WR")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("WQ")))
                             DangerFromDown = false;
                         else if ((WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("BP")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("BN")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("BB")) || (WCSkakiera[(WhiteKingColumn - 1)][(WhiteKingRank - klopa - 1)].equals("BK")))
                             DangerFromDown = false;
@@ -3100,7 +3110,7 @@ public static boolean CheckForWhiteCheck(String[][] WCSkakiera) {
                     {
                         if ((WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("BB")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("BQ")))
                             KingCheck = true;
-                        else if ((WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("White Rook")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WQ")))
+                        else if ((WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WR")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WQ")))
                             DangerFromUpRight = false;
                         else if ((WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("BP")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("BR")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("BN")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank + klopa - 1)].equals("BK")))
                             DangerFromUpRight = false;
@@ -3120,7 +3130,7 @@ public static boolean CheckForWhiteCheck(String[][] WCSkakiera) {
                     {
                         if ((WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("BB")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("BQ")))
                             KingCheck = true;
-                        else if ((WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("White Rook")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WQ")))
+                        else if ((WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WR")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WQ")))
                             DangerFromDownLeft = false;
                         else if ((WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("BP")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("BR")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("BN")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank - klopa - 1)].equals("BK")))
                             DangerFromDownLeft = false;
@@ -3139,7 +3149,7 @@ public static boolean CheckForWhiteCheck(String[][] WCSkakiera) {
                     {
                         if ((WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("BB")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("BQ")))
                             KingCheck = true;
-                        else if ((WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("White Rook")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WQ")))
+                        else if ((WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WR")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("WQ")))
                             DangerFromDownRight = false;
                         else if ((WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("BP")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("BR")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("BN")) || (WCSkakiera[(WhiteKingColumn + klopa - 1)][(WhiteKingRank - klopa - 1)].equals("BK")))
                             DangerFromDownRight = false;
@@ -3159,7 +3169,7 @@ public static boolean CheckForWhiteCheck(String[][] WCSkakiera) {
                     {
                         if ((WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("BB")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("BQ")))
                             KingCheck = true;
-                        else if ((WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("White Rook")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WQ")))
+                        else if ((WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WP")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WR")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WN")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WB")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("WQ")))
                             DangerFromUpLeft = false;
                         else if ((WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("BP")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("BR")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("BN")) || (WCSkakiera[(WhiteKingColumn - klopa - 1)][(WhiteKingRank + klopa - 1)].equals("BK")))
                             DangerFromUpLeft = false;
@@ -3290,7 +3300,7 @@ public static boolean CheckForBlackCheck(String[][] BCSkakiera) {
                 {
                     if (((BlKingColumn + klopa) <= 8) && (DangerFromRight == true))
                     {
-                        if ((BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - 1)].equals("White Rook")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - 1)].equals("WQ")))
+                        if ((BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - 1)].equals("WR")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - 1)].equals("WQ")))
                             KingCheck = true;
                         else if ((BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - 1)].equals("BP")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - 1)].equals("BR")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - 1)].equals("BN")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - 1)].equals("BB")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - 1)].equals("BQ")))
                             DangerFromRight = false;
@@ -3309,7 +3319,7 @@ public static boolean CheckForBlackCheck(String[][] BCSkakiera) {
                 {
                     if (((BlKingColumn - klopa) >= 1) && (DangerFromLeft == true))
                     {
-                        if ((BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - 1)].equals("White Rook")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - 1)].equals("WQ")))
+                        if ((BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - 1)].equals("WR")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - 1)].equals("WQ")))
                             KingCheck = true;
                         else if ((BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - 1)].equals("BP")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - 1)].equals("BR")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - 1)].equals("BN")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - 1)].equals("BB")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - 1)].equals("BQ")))
                             DangerFromLeft = false;
@@ -3331,7 +3341,7 @@ public static boolean CheckForBlackCheck(String[][] BCSkakiera) {
                 {
                     if (((BlKingRank + klopa) <= 8) && (DangerFromUp == true))
                     {
-                        if ((BCSkakiera[(BlKingColumn - 1)][(BlKingRank + klopa - 1)].equals("White Rook")) || (BCSkakiera[(BlKingColumn - 1)][(BlKingRank + klopa - 1)].equals("WQ")))
+                        if ((BCSkakiera[(BlKingColumn - 1)][(BlKingRank + klopa - 1)].equals("WR")) || (BCSkakiera[(BlKingColumn - 1)][(BlKingRank + klopa - 1)].equals("WQ")))
                             KingCheck = true;
                         else if ((BCSkakiera[(BlKingColumn - 1)][(BlKingRank + klopa - 1)].equals("BP")) || (BCSkakiera[(BlKingColumn - 1)][(BlKingRank + klopa - 1)].equals("BR")) || (BCSkakiera[(BlKingColumn - 1)][(BlKingRank + klopa - 1)].equals("BN")) || (BCSkakiera[(BlKingColumn - 1)][(BlKingRank + klopa - 1)].equals("BB")) || (BCSkakiera[(BlKingColumn - 1)][(BlKingRank + klopa - 1)].equals("BQ")))
                             DangerFromUp = false;
@@ -3352,7 +3362,7 @@ public static boolean CheckForBlackCheck(String[][] BCSkakiera) {
                 {
                     if (((BlKingRank - klopa) >= 1) && (DangerFromDown == true))
                     {
-                        if ((BCSkakiera[(BlKingColumn - 1)][(BlKingRank - klopa - 1)].equals("White Rook")) || (BCSkakiera[(BlKingColumn - 1)][(BlKingRank - klopa - 1)].equals("WQ")))
+                        if ((BCSkakiera[(BlKingColumn - 1)][(BlKingRank - klopa - 1)].equals("WR")) || (BCSkakiera[(BlKingColumn - 1)][(BlKingRank - klopa - 1)].equals("WQ")))
                             KingCheck = true;
                         else if ((BCSkakiera[(BlKingColumn - 1)][(BlKingRank - klopa - 1)].equals("BP")) || (BCSkakiera[(BlKingColumn - 1)][(BlKingRank - klopa - 1)].equals("BR")) || (BCSkakiera[(BlKingColumn - 1)][(BlKingRank - klopa - 1)].equals("BN")) || (BCSkakiera[(BlKingColumn - 1)][(BlKingRank - klopa - 1)].equals("BB")) || (BCSkakiera[(BlKingColumn - 1)][(BlKingRank - klopa - 1)].equals("BQ")))
                             DangerFromDown = false;
@@ -3377,7 +3387,7 @@ public static boolean CheckForBlackCheck(String[][] BCSkakiera) {
                             KingCheck = true;
                         else if ((BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("BP")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("BR")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("BN")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("BB")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("BQ")))
                             DangerFromUpRight = false;
-                        else if ((BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("WP")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("White Rook")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("WN")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("WK")))
+                        else if ((BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("WP")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("WR")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("WN")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank + klopa - 1)].equals("WK")))
                             DangerFromUpRight = false;
                     }
                 }
@@ -3398,7 +3408,7 @@ public static boolean CheckForBlackCheck(String[][] BCSkakiera) {
                             KingCheck = true;
                         else if ((BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("BP")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("BR")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("BN")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("BB")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("BQ")))
                             DangerFromDownLeft = false;
-                        else if ((BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("WP")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("White Rook")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("WN")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("WK")))
+                        else if ((BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("WP")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("WR")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("WN")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank - klopa - 1)].equals("WK")))
                             DangerFromDownLeft = false;
                     }
                 }
@@ -3418,7 +3428,7 @@ public static boolean CheckForBlackCheck(String[][] BCSkakiera) {
                             KingCheck = true;
                         else if ((BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("BP")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("BR")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("BN")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("BB")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("BQ")))
                             DangerFromDownRight = false;
-                        else if ((BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("WP")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("White Rook")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("WN")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("WK")))
+                        else if ((BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("WP")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("WR")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("WN")) || (BCSkakiera[(BlKingColumn + klopa - 1)][(BlKingRank - klopa - 1)].equals("WK")))
                             DangerFromDownRight = false;
                     }
                 }
@@ -3439,7 +3449,7 @@ public static boolean CheckForBlackCheck(String[][] BCSkakiera) {
                             KingCheck = true;
                         else if ((BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("BP")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("BR")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("BN")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("BB")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("BQ")))
                             DangerFromUpLeft = false;
-                        else if ((BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("WP")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("White Rook")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("WN")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("WK")))
+                        else if ((BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("WP")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("WR")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("WN")) || (BCSkakiera[(BlKingColumn - klopa - 1)][(BlKingRank + klopa - 1)].equals("WK")))
                             DangerFromUpLeft = false;
                     }
                 }
@@ -3585,7 +3595,7 @@ public static boolean CheckForBlackMate(String[][] BMSkakiera)
 					MovingPieceCBM = BMSkakiera[(StartingBlKingColumn - 1)][(StartingBlKingRank - 1)];
 					ProsorinoKommatiCBM = BMSkakiera[(StartingBlKingColumn - 1)][(StartingBlKingRank - 1 + 1)];
 
-					if ((ProsorinoKommatiCBM.compareTo("BQ") == 1) && (ProsorinoKommatiCBM.compareTo("BR") == 1) && (ProsorinoKommatiCBM.compareTo("BN") == 1) && (ProsorinoKommatiCBM.compareTo("BB") == 1) && (ProsorinoKommatiCBM.compareTo("BP") == 1) && (DangerForMate == true) && ((StartingBlKingRank - 1 + 1) <= 7))
+					if ((!"BQ".equals(ProsorinoKommatiCBM)) && (!"BR".equals(ProsorinoKommatiCBM)) && (!"BN".equals(ProsorinoKommatiCBM)) && (!"BB".equals(ProsorinoKommatiCBM)) && (!"BP".equals(ProsorinoKommatiCBM)) && (DangerForMate == true) && ((StartingBlKingRank - 1 + 1) <= 7))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά προς τα πάνω και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -3625,7 +3635,8 @@ public static boolean CheckForBlackMate(String[][] BMSkakiera)
 					MovingPieceCBM = BMSkakiera[(StartingBlKingColumn - 1)][(StartingBlKingRank - 1)];
 					ProsorinoKommatiCBM = BMSkakiera[(StartingBlKingColumn - 1 + 1)][(StartingBlKingRank - 1 + 1)];
 
-					if ((ProsorinoKommatiCBM.compareTo("BQ") == 1) && (ProsorinoKommatiCBM.compareTo("BR") == 1) && (ProsorinoKommatiCBM.compareTo("BN") == 1) && (ProsorinoKommatiCBM.compareTo("BB") == 1) && (ProsorinoKommatiCBM.compareTo("BP") == 1) && (DangerForMate == true) && ((StartingBlKingRank - 1 + 1) <= 7) && ((StartingBlKingColumn - 1 + 1) <= 7))
+                                        // (!"BQ".equals(ProsorinoKommatiCBM))
+					if ((!"BQ".equals(ProsorinoKommatiCBM)) && (!"BR".equals(ProsorinoKommatiCBM)) && (!"BN".equals(ProsorinoKommatiCBM)) && (!"BB".equals(ProsorinoKommatiCBM)) && (!"BP".equals(ProsorinoKommatiCBM)) && (DangerForMate == true) && ((StartingBlKingRank - 1 + 1) <= 7) && ((StartingBlKingColumn - 1 + 1) <= 7))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -3661,7 +3672,7 @@ public static boolean CheckForBlackMate(String[][] BMSkakiera)
 					MovingPieceCBM = BMSkakiera[(StartingBlKingColumn - 1)][(StartingBlKingRank - 1)];
 					ProsorinoKommatiCBM = BMSkakiera[(StartingBlKingColumn - 1 + 1)][(StartingBlKingRank - 1)];
 
-					if ((ProsorinoKommatiCBM.compareTo("BQ") == 1) && (ProsorinoKommatiCBM.compareTo("BR") == 1) && (ProsorinoKommatiCBM.compareTo("BN") == 1) && (ProsorinoKommatiCBM.compareTo("BB") == 1) && (ProsorinoKommatiCBM.compareTo("BP") == 1) && (DangerForMate == true) && ((StartingBlKingColumn - 1 + 1) <= 7))
+					if ((!"BQ".equals(ProsorinoKommatiCBM)) && (!"BR".equals(ProsorinoKommatiCBM)) && (!"BN".equals(ProsorinoKommatiCBM)) && (!"BB".equals(ProsorinoKommatiCBM)) && (!"BP".equals(ProsorinoKommatiCBM)) && (DangerForMate == true) && ((StartingBlKingColumn - 1 + 1) <= 7))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -3697,7 +3708,7 @@ public static boolean CheckForBlackMate(String[][] BMSkakiera)
 					MovingPieceCBM = BMSkakiera[(StartingBlKingColumn - 1)][(StartingBlKingRank - 1)];
 					ProsorinoKommatiCBM = BMSkakiera[(StartingBlKingColumn - 1 + 1)][(StartingBlKingRank - 1 - 1)];
 
-					if ((ProsorinoKommatiCBM.compareTo("BQ") == 1) && (ProsorinoKommatiCBM.compareTo("BR") == 1) && (ProsorinoKommatiCBM.compareTo("BN") == 1) && (ProsorinoKommatiCBM.compareTo("BB") == 1) && (ProsorinoKommatiCBM.compareTo("BP") == 1) && (DangerForMate == true) && ((StartingBlKingRank - 1 - 1) >= 0) && ((StartingBlKingColumn - 1 + 1) <= 7))
+					if ((!"BQ".equals(ProsorinoKommatiCBM)) && (!"BQ".equals(ProsorinoKommatiCBM)) && (!"BN".equals(ProsorinoKommatiCBM)) && (!"BB".equals(ProsorinoKommatiCBM)) && (!"BP".equals(ProsorinoKommatiCBM)) && (DangerForMate == true) && ((StartingBlKingRank - 1 - 1) >= 0) && ((StartingBlKingColumn - 1 + 1) <= 7))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -3733,7 +3744,7 @@ public static boolean CheckForBlackMate(String[][] BMSkakiera)
 					MovingPieceCBM = BMSkakiera[(StartingBlKingColumn - 1)][(StartingBlKingRank - 1)];
 					ProsorinoKommatiCBM = BMSkakiera[(StartingBlKingColumn - 1)][(StartingBlKingRank - 1 - 1)];
 
-					if ((ProsorinoKommatiCBM.compareTo("BQ") == 1) && (ProsorinoKommatiCBM.compareTo("BR") == 1) && (ProsorinoKommatiCBM.compareTo("BN") == 1) && (ProsorinoKommatiCBM.compareTo("BB") == 1) && (ProsorinoKommatiCBM.compareTo("BP") == 1) && (DangerForMate == true) && ((StartingBlKingRank - 1 - 1) >= 0))
+					if ((!"BQ".equals(ProsorinoKommatiCBM)) && (!"BR".equals(ProsorinoKommatiCBM)) && (!"BN".equals(ProsorinoKommatiCBM)) && (!"BB".equals(ProsorinoKommatiCBM)) && (!"BP".equals(ProsorinoKommatiCBM)) && (DangerForMate == true) && ((StartingBlKingRank - 1 - 1) >= 0))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά προς τα πάνω και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -3769,7 +3780,7 @@ public static boolean CheckForBlackMate(String[][] BMSkakiera)
 					MovingPieceCBM = BMSkakiera[(StartingBlKingColumn - 1)][(StartingBlKingRank - 1)];
 					ProsorinoKommatiCBM = BMSkakiera[(StartingBlKingColumn - 1 - 1)][(StartingBlKingRank - 1 - 1)];
 
-					if ((ProsorinoKommatiCBM.compareTo("BQ") == 1) && (ProsorinoKommatiCBM.compareTo("BR") == 1) && (ProsorinoKommatiCBM.compareTo("BN") == 1) && (ProsorinoKommatiCBM.compareTo("BB") == 1) && (ProsorinoKommatiCBM.compareTo("BP") == 1) && (DangerForMate == true) && ((StartingBlKingRank - 1 - 1) >= 0) && ((StartingBlKingColumn - 1 - 1) >= 0))
+					if ((!"BQ".equals(ProsorinoKommatiCBM)) && (!"BR".equals(ProsorinoKommatiCBM)) && (!"BN".equals(ProsorinoKommatiCBM)) && (!"BB".equals(ProsorinoKommatiCBM)) && (!"BP".equals(ProsorinoKommatiCBM)) && (DangerForMate == true) && ((StartingBlKingRank - 1 - 1) >= 0) && ((StartingBlKingColumn - 1 - 1) >= 0))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -3805,7 +3816,7 @@ public static boolean CheckForBlackMate(String[][] BMSkakiera)
 					MovingPieceCBM = BMSkakiera[(StartingBlKingColumn - 1)][(StartingBlKingRank - 1)];
 					ProsorinoKommatiCBM = BMSkakiera[(StartingBlKingColumn - 1 - 1)][(StartingBlKingRank - 1)];
 
-					if ((ProsorinoKommatiCBM.compareTo("BQ") == 1) && (ProsorinoKommatiCBM.compareTo("BR") == 1) && (ProsorinoKommatiCBM.compareTo("BN") == 1) && (ProsorinoKommatiCBM.compareTo("BB") == 1) && (ProsorinoKommatiCBM.compareTo("BP") == 1) && (DangerForMate == true) && ((StartingBlKingColumn - 1 - 1) >= 0))
+					if ((!"BQ".equals(ProsorinoKommatiCBM)) && (!"BR".equals(ProsorinoKommatiCBM)) && (!"BN".equals(ProsorinoKommatiCBM)) && (!"BB".equals(ProsorinoKommatiCBM)) && (!"BP".equals(ProsorinoKommatiCBM)) && (DangerForMate == true) && ((StartingBlKingColumn - 1 - 1) >= 0))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -3841,7 +3852,7 @@ public static boolean CheckForBlackMate(String[][] BMSkakiera)
 					MovingPieceCBM = BMSkakiera[(StartingBlKingColumn - 1)][(StartingBlKingRank - 1)];
 					ProsorinoKommatiCBM = BMSkakiera[(StartingBlKingColumn - 1 - 1)][(StartingBlKingRank - 1 + 1)];
 
-					if ((ProsorinoKommatiCBM.compareTo("BQ") == 1) && (ProsorinoKommatiCBM.compareTo("BR") == 1) && (ProsorinoKommatiCBM.compareTo("BN") == 1) && (ProsorinoKommatiCBM.compareTo("BB") == 1) && (ProsorinoKommatiCBM.compareTo("BP") == 1) && (DangerForMate == true) && ((StartingBlKingRank - 1 + 1) <= 7) && ((StartingBlKingColumn - 1 - 1) >= 0))
+					if ((!"BQ".equals(ProsorinoKommatiCBM)) && (!"BR".equals(ProsorinoKommatiCBM)) && (!"BN".equals(ProsorinoKommatiCBM)) && (!"BB".equals(ProsorinoKommatiCBM)) && (!"BP".equals(ProsorinoKommatiCBM)) && (DangerForMate == true) && ((StartingBlKingRank - 1 + 1) <= 7) && ((StartingBlKingColumn - 1 - 1) >= 0))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -3955,7 +3966,7 @@ public static boolean CheckForWhiteMate(String[][] WMSkakiera)
 					MovingPieceCWM = WMSkakiera[(StartingWhiteKingColumn - 1)][(StartingWhiteKingRank - 1)];
 					ProsorinoKommatiCWM = WMSkakiera[(StartingWhiteKingColumn - 1)][(StartingWhiteKingRank - 1 + 1)];
 
-					if ((ProsorinoKommatiCWM.compareTo("WQ") == 1) && (ProsorinoKommatiCWM.compareTo("White Rook") == 1) && (ProsorinoKommatiCWM.compareTo("WN") == 1) && (ProsorinoKommatiCWM.compareTo("WB") == 1) && (ProsorinoKommatiCWM.compareTo("WP") == 1) && (DangerForMate == true) && ((StartingWhiteKingRank - 1 + 1) <= 7))
+					if ((!"WQ".equals(ProsorinoKommatiCWM)) && (!"WR".equals(ProsorinoKommatiCWM)) && (!"WN".equals(ProsorinoKommatiCWM)) && (!"WB".equals(ProsorinoKommatiCWM)) && (!"WP".equals(ProsorinoKommatiCWM)) && (DangerForMate == true) && ((StartingWhiteKingRank - 1 + 1) <= 7))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά προς τα πάνω και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -3995,7 +4006,7 @@ public static boolean CheckForWhiteMate(String[][] WMSkakiera)
 					MovingPieceCWM = WMSkakiera[(StartingWhiteKingColumn - 1)][(StartingWhiteKingRank - 1)];
 					ProsorinoKommatiCWM = WMSkakiera[(StartingWhiteKingColumn - 1 + 1)][(StartingWhiteKingRank - 1 + 1)];
 
-					if ((ProsorinoKommatiCWM.compareTo("WQ") == 1) && (ProsorinoKommatiCWM.compareTo("White Rook") == 1) && (ProsorinoKommatiCWM.compareTo("WN") == 1) && (ProsorinoKommatiCWM.compareTo("WB") == 1) && (ProsorinoKommatiCWM.compareTo("WP") == 1) && (DangerForMate == true) && ((StartingWhiteKingRank - 1 + 1) <= 7) && ((StartingWhiteKingColumn - 1 + 1) <= 7))
+					if ((!"WQ".equals(ProsorinoKommatiCWM)) && (!"WR".equals(ProsorinoKommatiCWM)) && (!"WN".equals(ProsorinoKommatiCWM)) && (!"WB".equals(ProsorinoKommatiCWM)) && (!"WP".equals(ProsorinoKommatiCWM)) && (DangerForMate == true) && ((StartingWhiteKingRank - 1 + 1) <= 7) && ((StartingWhiteKingColumn - 1 + 1) <= 7))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -4031,7 +4042,7 @@ public static boolean CheckForWhiteMate(String[][] WMSkakiera)
 					MovingPieceCWM = WMSkakiera[(StartingWhiteKingColumn - 1)][(StartingWhiteKingRank - 1)];
 					ProsorinoKommatiCWM = WMSkakiera[(StartingWhiteKingColumn - 1 + 1)][(StartingWhiteKingRank - 1)];
 
-					if ((ProsorinoKommatiCWM.compareTo("WQ") == 1) && (ProsorinoKommatiCWM.compareTo("White Rook") == 1) && (ProsorinoKommatiCWM.compareTo("WN") == 1) && (ProsorinoKommatiCWM.compareTo("WB") == 1) && (ProsorinoKommatiCWM.compareTo("WP") == 1) && (DangerForMate == true) && ((StartingWhiteKingColumn - 1 + 1) <= 7))
+					if ((!"WQ".equals(ProsorinoKommatiCWM)) && (!"WR".equals(ProsorinoKommatiCWM)) && (!"WN".equals(ProsorinoKommatiCWM)) && (!"WB".equals(ProsorinoKommatiCWM)) && (!"WP".equals(ProsorinoKommatiCWM)) && (DangerForMate == true) && ((StartingWhiteKingColumn - 1 + 1) <= 7))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -4067,7 +4078,7 @@ public static boolean CheckForWhiteMate(String[][] WMSkakiera)
 					MovingPieceCWM = WMSkakiera[(StartingWhiteKingColumn - 1)][(StartingWhiteKingRank - 1)];
 					ProsorinoKommatiCWM = WMSkakiera[(StartingWhiteKingColumn - 1 + 1)][(StartingWhiteKingRank - 1 - 1)];
 
-					if ((ProsorinoKommatiCWM.compareTo("WQ") == 1) && (ProsorinoKommatiCWM.compareTo("White Rook") == 1) && (ProsorinoKommatiCWM.compareTo("WN") == 1) && (ProsorinoKommatiCWM.compareTo("WB") == 1) && (ProsorinoKommatiCWM.compareTo("WP") == 1) && (DangerForMate == true) && ((StartingWhiteKingRank - 1 - 1) >= 0) && ((StartingWhiteKingColumn - 1 + 1) <= 7))
+					if ((!"WQ".equals(ProsorinoKommatiCWM)) && (!"WR".equals(ProsorinoKommatiCWM)) && (!"WN".equals(ProsorinoKommatiCWM)) && (!"WB".equals(ProsorinoKommatiCWM)) && (!"WP".equals(ProsorinoKommatiCWM)) && (DangerForMate == true) && ((StartingWhiteKingRank - 1 - 1) >= 0) && ((StartingWhiteKingColumn - 1 + 1) <= 7))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -4103,7 +4114,7 @@ public static boolean CheckForWhiteMate(String[][] WMSkakiera)
 					MovingPieceCWM = WMSkakiera[(StartingWhiteKingColumn - 1)][(StartingWhiteKingRank - 1)];
 					ProsorinoKommatiCWM = WMSkakiera[(StartingWhiteKingColumn - 1)][(StartingWhiteKingRank - 1 - 1)];
 
-					if ((ProsorinoKommatiCWM.compareTo("WQ") == 1) && (ProsorinoKommatiCWM.compareTo("White Rook") == 1) && (ProsorinoKommatiCWM.compareTo("WN") == 1) && (ProsorinoKommatiCWM.compareTo("WB") == 1) && (ProsorinoKommatiCWM.compareTo("WP") == 1) && (DangerForMate == true) && ((StartingWhiteKingRank - 1 - 1) >= 0))
+					if ((!"WQ".equals(ProsorinoKommatiCWM)) && (!"WR".equals(ProsorinoKommatiCWM)) && (!"WN".equals(ProsorinoKommatiCWM)) && (!"WB".equals(ProsorinoKommatiCWM)) && (!"WP".equals(ProsorinoKommatiCWM)) && (DangerForMate == true) && ((StartingWhiteKingRank - 1 - 1) >= 0))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά προς τα πάνω και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -4139,7 +4150,7 @@ public static boolean CheckForWhiteMate(String[][] WMSkakiera)
 					MovingPieceCWM = WMSkakiera[(StartingWhiteKingColumn - 1)][(StartingWhiteKingRank - 1)];
 					ProsorinoKommatiCWM = WMSkakiera[(StartingWhiteKingColumn - 1 - 1)][(StartingWhiteKingRank - 1 - 1)];
 
-					if ((ProsorinoKommatiCWM.compareTo("WQ") == 1) && (ProsorinoKommatiCWM.compareTo("White Rook") == 1) && (ProsorinoKommatiCWM.compareTo("WN") == 1) && (ProsorinoKommatiCWM.compareTo("WB") == 1) && (ProsorinoKommatiCWM.compareTo("WP") == 1) && (DangerForMate == true) && ((StartingWhiteKingRank - 1 - 1) >= 0) && ((StartingWhiteKingColumn - 1 - 1) >= 0))
+					if ((!"WQ".equals(ProsorinoKommatiCWM)) && (!"WR".equals(ProsorinoKommatiCWM)) && (!"WN".equals(ProsorinoKommatiCWM)) && (!"WB".equals(ProsorinoKommatiCWM)) && (!"WP".equals(ProsorinoKommatiCWM)) && (DangerForMate == true) && ((StartingWhiteKingRank - 1 - 1) >= 0) && ((StartingWhiteKingColumn - 1 - 1) >= 0))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -4173,7 +4184,7 @@ public static boolean CheckForWhiteMate(String[][] WMSkakiera)
 					MovingPieceCWM = WMSkakiera[(StartingWhiteKingColumn - 1)][(StartingWhiteKingRank - 1)];
 					ProsorinoKommatiCWM = WMSkakiera[(StartingWhiteKingColumn - 1 - 1)][(StartingWhiteKingRank - 1)];
 
-					if ((ProsorinoKommatiCWM.compareTo("WQ") == 1) && (ProsorinoKommatiCWM.compareTo("White Rook") == 1) && (ProsorinoKommatiCWM.compareTo("WN") == 1) && (ProsorinoKommatiCWM.compareTo("WB") == 1) && (ProsorinoKommatiCWM.compareTo("WP") == 1) && (DangerForMate == true) && ((StartingWhiteKingColumn - 1 - 1) >= 0))
+					if ((!"WQ".equals(ProsorinoKommatiCWM)) && (!"WR".equals(ProsorinoKommatiCWM)) && (!"WN".equals(ProsorinoKommatiCWM)) && (!"WB".equals(ProsorinoKommatiCWM)) && (!"WP".equals(ProsorinoKommatiCWM)) && (DangerForMate == true) && ((StartingWhiteKingColumn - 1 - 1) >= 0))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -4209,7 +4220,7 @@ public static boolean CheckForWhiteMate(String[][] WMSkakiera)
 					MovingPieceCWM = WMSkakiera[(StartingWhiteKingColumn - 1)][(StartingWhiteKingRank - 1)];
 					ProsorinoKommatiCWM = WMSkakiera[(StartingWhiteKingColumn - 1 - 1)][(StartingWhiteKingRank - 1 + 1)];
 
-					if ((ProsorinoKommatiCWM.compareTo("WQ") == 1) && (ProsorinoKommatiCWM.compareTo("White Rook") == 1) && (ProsorinoKommatiCWM.compareTo("WN") == 1) && (ProsorinoKommatiCWM.compareTo("WB") == 1) && (ProsorinoKommatiCWM.compareTo("WP") == 1) && (DangerForMate == true) && ((StartingWhiteKingRank - 1 + 1) <= 7) && ((StartingWhiteKingColumn - 1 - 1) >= 0))
+					if ((!"WQ".equals(ProsorinoKommatiCWM)) && (!"WR".equals(ProsorinoKommatiCWM)) && (!"WN".equals(ProsorinoKommatiCWM)) && (!"WB".equals(ProsorinoKommatiCWM)) && (!"WP".equals(ProsorinoKommatiCWM)) && (DangerForMate == true) && ((StartingWhiteKingRank - 1 + 1) <= 7) && ((StartingWhiteKingColumn - 1 - 1) >= 0))
 					{
 
 						// (Προσωρινή) μετακίνηση του βασιλιά και έλεγχος του αν συνεχίζει τότε να υπάρχει σαχ.
@@ -4271,7 +4282,7 @@ public static void Analyze_Move_1_HumanMove(String[][] Skakiera_Human_Thinking_2
         for (trelos35 = 0; trelos35 <= 7; trelos35++)
         {
             //v0.990: (Who_Is_Analyzed.equals("Hu")) -> (Who_Is_Analyzed.equals("Human"))
-            if (((Who_Is_Analyzed.equals("Human")) && ((((Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("BK")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("BQ")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("BR")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("BN")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("BB")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("BP"))) && (m_PlayerColor.equals("b"))) || (((Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("WK")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("WQ")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("White Rook")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("WN")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("WB")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("WP"))) && (m_PlayerColor.equals("w"))))))
+            if (((Who_Is_Analyzed.equals("Human")) && ((((Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("BK")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("BQ")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("BR")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("BN")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("BB")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("BP"))) && (m_PlayerColor.equals("b"))) || (((Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("WK")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("WQ")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("WR")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("WN")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("WB")) || (Skakiera_Human_Thinking_2[(skakos1)][(trelos35)].equals("WP"))) && (m_PlayerColor.equals("w"))))))
             {
                 for (int w = 0; w <= 7; w++)
                 {
@@ -4293,7 +4304,7 @@ public static void Analyze_Move_1_HumanMove(String[][] Skakiera_Human_Thinking_2
                         //m_FinishingColumnNumber1 = m_FinishingColumnNumber;
                         //m_StartingRank1 = m_StartingRank;
                         //m_FinishingRank1 = m_FinishingRank;
-                        ProsorinoKommati1 = Skakiera_Human_Thinking_2[(m_FinishingColumnNumber1 - 1)][(m_FinishingRank1 - 1)];
+                        //ProsorinoKommati1 = Skakiera_Human_Thinking_2[(m_FinishingColumnNumber1 - 1)][(m_FinishingRank1 - 1)];
 
                         // Check the move
                         //v0.980: Removed
@@ -4314,6 +4325,9 @@ public static void Analyze_Move_1_HumanMove(String[][] Skakiera_Human_Thinking_2
                         // If all ok, then do the move and measure it
                         if ((m_OrthotitaKinisis == true) && (m_NomimotitaKinisis == true))
                         {
+                            //v0.992
+                            Human_Move_Found = true;
+                                        
                             // Do the move
                             //v0.990: ProsorinoKommati -> ProsorinoKommati1, MovingPiece -> MovingPiece1
                             ProsorinoKommati1 = Skakiera_Human_Thinking_2[(m_FinishingColumnNumber1 - 1)][(m_FinishingRank1 - 1)];
@@ -4486,7 +4500,7 @@ public static void Analyze_Move_2_ComputerMove(String[][] Skakiera_Thinking_HY_2
     {
         for (jjj2 = 0; jjj2 <= 7; jjj2++)
         {
-            if (((Who_Is_Analyzed.equals("HY")) && ((((Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("WK")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("WQ")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("White Rook")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("WN")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("WB")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("WP"))) && (m_PlayerColor.equals("b"))) || (((Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("BK")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("BQ")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("BR")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("BN")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("BB")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("BP"))) && (m_PlayerColor.equals("w"))))))
+            if (((Who_Is_Analyzed.equals("HY")) && ((((Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("WK")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("WQ")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("WR")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("WN")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("WB")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("WP"))) && (m_PlayerColor.equals("b"))) || (((Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("BK")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("BQ")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("BR")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("BN")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("BB")) || (Skakiera_Thinking_HY_2[(iii2)][(jjj2)].equals("BP"))) && (m_PlayerColor.equals("w"))))))
             {
                 //huo_sw1.WriteLine(String.Concat("[Point 1] -> Σκακιέρα[5,1] = ", Skakiera_Thinking_HY_2[4, 0].ToString()));
 
@@ -4502,7 +4516,7 @@ public static void Analyze_Move_2_ComputerMove(String[][] Skakiera_Thinking_HY_2
                         m_FinishingColumnNumber2 = w + 1;
                         m_StartingRank2 = jjj2 + 1;
                         m_FinishingRank2 = r + 1;
-                        ProsorinoKommati2 = Skakiera_Thinking_HY_2[(m_FinishingColumnNumber2 - 1)][(m_FinishingRank2 - 1)];
+                        //ProsorinoKommati2 = Skakiera_Thinking_HY_2[(m_FinishingColumnNumber2 - 1)][(m_FinishingRank2 - 1)];
 
                         // Έλεγχος της κίνησης
 
@@ -4656,7 +4670,7 @@ public static void Analyze_Move_3_HumanMove(String[][] Skakiera_Human_Thinking_3
         for (trelos36 = 0; trelos36 <= 7; trelos36++)
         {
             //v0.990: (Who_Is_Analyzed.equals("Hu")) -> (Who_Is_Analyzed.equals("Human"))
-            if (((Who_Is_Analyzed.equals("Human")) && ((((Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("BK")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("BQ")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("BR")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("BN")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("BB")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("BP"))) && (m_PlayerColor.equals("b"))) || (((Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("WK")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("WQ")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("White Rook")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("WN")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("WB")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("WP"))) && (m_PlayerColor.equals("w"))))))
+            if (((Who_Is_Analyzed.equals("Human")) && ((((Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("BK")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("BQ")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("BR")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("BN")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("BB")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("BP"))) && (m_PlayerColor.equals("b"))) || (((Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("WK")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("WQ")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("WR")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("WN")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("WB")) || (Skakiera_Human_Thinking_3[(skakos3)][(trelos36)].equals("WP"))) && (m_PlayerColor.equals("w"))))))
             {
                 for (int w = 0; w <= 7; w++)
                 {
@@ -4678,7 +4692,7 @@ public static void Analyze_Move_3_HumanMove(String[][] Skakiera_Human_Thinking_3
                         //m_FinishingColumnNumber3 = m_FinishingColumnNumber;
                         //m_StartingRank3 = m_StartingRank;
                         //m_FinishingRank3 = m_FinishingRank;
-                        ProsorinoKommati3 = Skakiera_Human_Thinking_3[(m_FinishingColumnNumber3 - 1)][(m_FinishingRank3 - 1)];
+                        //ProsorinoKommati3 = Skakiera_Human_Thinking_3[(m_FinishingColumnNumber3 - 1)][(m_FinishingRank3 - 1)];
 
                         // Check the move
                         //v0.980: Removed
@@ -4825,7 +4839,7 @@ public static void Analyze_Move_4_ComputerMove(String[][] Skakiera_Thinking_HY_4
     {
         for (jjj4 = 0; jjj4 <= 7; jjj4++)
         {
-            if (((Who_Is_Analyzed.equals("HY")) && ((((Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("WK")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("WQ")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("White Rook")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("WN")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("WB")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("WP"))) && (m_PlayerColor.equals("b"))) || (((Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("BK")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("BQ")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("BR")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("BN")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("BB")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("BP"))) && (m_PlayerColor.equals("w"))))))
+            if (((Who_Is_Analyzed.equals("HY")) && ((((Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("WK")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("WQ")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("WR")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("WN")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("WB")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("WP"))) && (m_PlayerColor.equals("b"))) || (((Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("BK")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("BQ")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("BR")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("BN")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("BB")) || (Skakiera_Thinking_HY_4[(iii4)][(jjj4)].equals("BP"))) && (m_PlayerColor.equals("w"))))))
             {
                 //huo_sw1.WriteLine(String.Concat("[Point 1] -> Σκακιέρα[5,1] = ", Skakiera_Thinking_HY_4[4, 0].ToString()));
 
@@ -4841,7 +4855,7 @@ public static void Analyze_Move_4_ComputerMove(String[][] Skakiera_Thinking_HY_4
                         m_FinishingColumnNumber4 = w + 1;
                         m_StartingRank4 = jjj4 + 1;
                         m_FinishingRank4 = r + 1;
-                        ProsorinoKommati4 = Skakiera_Thinking_HY_4[(m_FinishingColumnNumber4 - 1)][(m_FinishingRank4 - 1)];
+                        //ProsorinoKommati4 = Skakiera_Thinking_HY_4[(m_FinishingColumnNumber4 - 1)][(m_FinishingRank4 - 1)];
 
                         // Έλεγχος της κίνησης
 
@@ -4965,7 +4979,7 @@ public static void FindAttackers(String[][] SkakieraAttackers)
 			{
 				for (int jjj2 = 0; jjj2 <= 7; jjj2++)
 				{
-					if ((((SkakieraAttackers[(iii2)][(jjj2)].equals("WK")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("WQ")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("White Rook")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("WN")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("WB")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("WP"))) && (m_PlayerColor.equals("w"))) || (((SkakieraAttackers[(iii2)][(jjj2)].equals("BK")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("BQ")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("BR")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("BN")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("BB")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("BP"))) && (m_PlayerColor.equals("b"))))
+					if ((((SkakieraAttackers[(iii2)][(jjj2)].equals("WK")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("WQ")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("WR")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("WN")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("WB")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("WP"))) && (m_PlayerColor.equals("w"))) || (((SkakieraAttackers[(iii2)][(jjj2)].equals("BK")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("BQ")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("BR")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("BN")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("BB")) || (SkakieraAttackers[(iii2)][(jjj2)].equals("BP"))) && (m_PlayerColor.equals("b"))))
 					{
 
 						MovingPiece_Attack = SkakieraAttackers[(iii2)][(jjj2)];
@@ -5015,7 +5029,7 @@ public static void FindAttackers(String[][] SkakieraAttackers)
 									// Calculate the value (total value) of the attackers
 									//MessageBox.Show(string.Concat("Added something to the value of attackers: ", MovingPiece_Attack.ToString()));
 
-									if ((MovingPiece_Attack.equals("White Rook")) || (MovingPiece_Attack.equals("BR")))
+									if ((MovingPiece_Attack.equals("WR")) || (MovingPiece_Attack.equals("BR")))
 									{
 										Value_of_attackers[(m_FinishingColumnNumber_Attack - 1)][(m_FinishingRank_Attack - 1)] = Value_of_attackers[(m_FinishingColumnNumber_Attack - 1)][(m_FinishingRank_Attack - 1)] + 5;
 									}
@@ -5071,7 +5085,7 @@ public static void FindDefenders(String[][] SkakieraDefenders)
 			{
 				for (int jjj3 = 0; jjj3 <= 7; jjj3++)
 				{
-					if ((((SkakieraDefenders[(iii3)][(jjj3)].equals("WK")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("WQ")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("White Rook")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("WN")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("WB")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("WP"))) && (m_PlayerColor.equals("b"))) || (((SkakieraDefenders[(iii3)][(jjj3)].equals("BK")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("BQ")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("BR")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("BN")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("BB")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("BP"))) && (m_PlayerColor.equals("w"))))
+					if ((((SkakieraDefenders[(iii3)][(jjj3)].equals("WK")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("WQ")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("WR")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("WN")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("WB")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("WP"))) && (m_PlayerColor.equals("b"))) || (((SkakieraDefenders[(iii3)][(jjj3)].equals("BK")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("BQ")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("BR")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("BN")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("BB")) || (SkakieraDefenders[(iii3)][(jjj3)].equals("BP"))) && (m_PlayerColor.equals("w"))))
 					{
 						MovingPiece_Attack = SkakieraDefenders[(iii3)][(jjj3)];
 						m_StartingColumnNumber_Attack = iii3 + 1;
@@ -5117,7 +5131,7 @@ public static void FindDefenders(String[][] SkakieraDefenders)
 									// Calculate the value (total value) of the defenders
 									//MessageBox.Show(string.Concat("Added something to the value of defenders for (", (m_FinishingColumnNumber_Attack).ToString(), ",", (m_FinishingRank_Attack).ToString(), "): ", MovingPiece_Attack.ToString()));
 
-									if ((MovingPiece_Attack.equals("White Rook")) || (MovingPiece_Attack.equals("BR")))
+									if ((MovingPiece_Attack.equals("WR")) || (MovingPiece_Attack.equals("BR")))
 									{
 										Value_of_defenders[(m_FinishingColumnNumber_Attack - 1)][(m_FinishingRank_Attack - 1)] = Value_of_defenders[(m_FinishingColumnNumber_Attack - 1)][(m_FinishingRank_Attack - 1)] + 5;
 									}
@@ -5226,7 +5240,7 @@ public static void PawnPromotion()
 					{
 						case 1 -> Skakiera[(i)][(0)] = "WQ";
 
-						case 2 -> Skakiera[(i)][(0)] = "White Rook";
+						case 2 -> Skakiera[(i)][(0)] = "WR";
 
 						case 3 -> Skakiera[(i)][(0)] = "WN";
 
